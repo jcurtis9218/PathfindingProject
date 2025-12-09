@@ -3,6 +3,7 @@
 #pragma once
 
 #include "PathfindingTerrain.h"
+#include "NavMesh/NavMeshBoundsVolume.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "PathfindingLevel.generated.h"
@@ -35,7 +36,7 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 	TArray<float> generation_weights;
-
+	
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<APathfindingTerrain> start_tile_type;
 	UPROPERTY(EditAnywhere)
@@ -44,6 +45,22 @@ public:
 	TArray<TArray<APathfindingTerrain*>> level;
 
 	TSubclassOf<APathfindingTerrain> get_random_tile_type();
+
+	TArray<std::pair<int, int>> grid_directions = {
+		std::make_pair(1, -1),
+		std::make_pair(1, 0),
+		std::make_pair(1, 1),
+		std::make_pair(0, -1),
+		std::make_pair(0, 1),
+		std::make_pair(-1, -1),
+		std::make_pair(-1, 0),
+		std::make_pair(-1, 1),
+		
+	};
+	
+	TArray<APathfindingTerrain*> get_neighbors(APathfindingTerrain* tile);
+
+	float linear_distance_between(APathfindingTerrain* first, APathfindingTerrain* second);
 	
 	void generate_level(int rows, int columns);
 };

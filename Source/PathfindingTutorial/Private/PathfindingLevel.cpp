@@ -1,8 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "PathfindingLevel.h"
 
+#include "PathfindingLevel.h"
+#include "NavigationSystem.h"
 // Sets default values
 APathfindingLevel::APathfindingLevel()
 {
@@ -45,6 +46,30 @@ TSubclassOf<APathfindingTerrain> APathfindingLevel::get_random_tile_type()
 	
 }
 
+TArray<APathfindingTerrain*> APathfindingLevel::get_neighbors(APathfindingTerrain* tile)
+{
+	TArray<APathfindingTerrain*> neighbors;
+	for (std::pair<int, int> direction : grid_directions)
+	{
+		if (direction.first > 0 and direction.first < level_rows)
+		{
+			if (direction.second > 0 and direction.second < level_columns)
+			{
+				if (level[direction.first][direction.second]->walkable)
+				{
+					neighbors.Add(level[direction.first][direction.second]);
+				}
+			}
+		}
+	}
+	return neighbors;
+}
+
+float APathfindingLevel::linear_distance_between(APathfindingTerrain* first, APathfindingTerrain* second)
+{
+	return (first->GetActorLocation()-second->GetActorLocation()).Size();
+}
+
 void APathfindingLevel::generate_level(int rows, int columns)
 {
 	for (int row_num = 0; row_num < rows; row_num++)
@@ -65,11 +90,22 @@ void APathfindingLevel::generate_level(int rows, int columns)
 			{
 				tile_type = get_random_tile_type();
 			}
-			APathfindingTerrain* tile_in_world = GetWorld()->SpawnActor<APathfindingTerrain>(tile_type);
-			tile_in_world->SetActorLocation(FVector(column_num*100, row_num*100, 0.0f));
+			FTransform SpawnTransform;
+			SpawnTransform.SetLocation(FVector(column_num * 100, row_num * 100, 0.0f));
+
+			APathfindingTerrain* tile_in_world = GetWorld()->SpawnActorDeferred<APathfindingTerrain>(tile_type, SpawnTransform);
+			tile_in_world->FinishSpawning(SpawnTransform);
 			row_tiles.Add(tile_in_world);
 		}
 		level.Add(row_tiles);
+	}
+	
+	UNavigationSystemV1* NavSys =
+		FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+
+	if (NavSys)
+	{
+		NavSys->Build();
 	}
 }
 
