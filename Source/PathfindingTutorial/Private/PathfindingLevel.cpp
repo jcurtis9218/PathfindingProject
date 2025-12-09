@@ -15,7 +15,7 @@ APathfindingLevel::APathfindingLevel()
 void APathfindingLevel::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	generate_level(level_rows, level_columns);
 }
 
 // Called every frame
@@ -52,7 +52,19 @@ void APathfindingLevel::generate_level(int rows, int columns)
 		TArray<APathfindingTerrain*> row_tiles;
 		for (int column_num = 0; column_num < columns; column_num++)
 		{
-			TSubclassOf<APathfindingTerrain> tile_type = get_random_tile_type();
+			TSubclassOf<APathfindingTerrain> tile_type;
+			if (row_num == 0 and column_num == 0)
+			{
+				tile_type = start_tile_type;
+			}
+			else if (row_num == rows - 1 and column_num == columns - 1)
+			{
+				tile_type = goal_tile_type;
+			}
+			else
+			{
+				tile_type = get_random_tile_type();
+			}
 			APathfindingTerrain* tile_in_world = GetWorld()->SpawnActor<APathfindingTerrain>(tile_type);
 			tile_in_world->SetActorLocation(FVector(column_num*100, row_num*100, 0.0f));
 			row_tiles.Add(tile_in_world);
