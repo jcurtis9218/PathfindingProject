@@ -15,10 +15,19 @@ UCLASS()
 class PATHFINDINGTUTORIAL_API APathfindingController : public AAIController
 {
 	GENERATED_BODY()
+	APathfindingController();
 public:
+	virtual void Tick(float DeltaTime) override;
+	
 	TArray<APathfindingTerrain*> path;
 	int current_index = 0;
 
+	UPROPERTY(EditAnywhere)
+	float movement_speed;
+	
+	UPROPERTY(EditAnywhere)
+	float target_tolerance;
+	
 	void move_along_path(float DeltaTime);
 	void generate_path(APathfindingLevel* level, APathfindingTerrain* start, APathfindingTerrain* goal);
 };

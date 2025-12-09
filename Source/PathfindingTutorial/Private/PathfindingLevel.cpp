@@ -4,6 +4,7 @@
 
 #include "PathfindingLevel.h"
 #include "NavigationSystem.h"
+#include "PathfindingController.h"
 // Sets default values
 APathfindingLevel::APathfindingLevel()
 {
@@ -17,6 +18,17 @@ void APathfindingLevel::BeginPlay()
 {
 	Super::BeginPlay();
 	generate_level(level_rows, level_columns);
+	if (not pawn_class)
+	{
+		return;
+	}
+	FVector spawn_location = GetActorLocation()+FVector(0, 0, 25);
+	pawn_in_world = GetWorld()->SpawnActor<APawn>(pawn_class, spawn_location, FRotator(0, 0, 0));
+	APathfindingController* controller_in_world = Cast<APathfindingController>(pawn_in_world->GetController());
+	if (controller_in_world)
+	{
+		controller_in_world->generate_path(this, level[0][0], level[level_rows-1][level_columns-1]);
+	}
 }
 
 // Called every frame

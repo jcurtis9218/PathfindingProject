@@ -42,6 +42,11 @@ public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<APathfindingTerrain> goal_tile_type;
 	
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<APawn> pawn_class;
+
+	APawn* pawn_in_world;
+	
 	TArray<TArray<APathfindingTerrain*>> level;
 
 	TSubclassOf<APathfindingTerrain> get_random_tile_type();

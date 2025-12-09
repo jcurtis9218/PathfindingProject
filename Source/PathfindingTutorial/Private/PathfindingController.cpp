@@ -5,6 +5,38 @@
 #include <queue>
 #include <map>
 
+APathfindingController::APathfindingController()
+{
+	PrimaryActorTick.bCanEverTick = true;
+}
+
+void APathfindingController::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	move_along_path(DeltaTime);
+}
+
+void APathfindingController::move_along_path(float DeltaTime)
+{
+	if (path.Num() == 0 or current_index >= path.Num())
+	{
+		return;
+	}
+	APawn* controlled_pawn = GetPawn();
+	if (not controlled_pawn)
+	{
+		return;
+	}
+	FVector target_location = path[current_index]->GetActorLocation();
+	FVector movement_direction = (target_location-controlled_pawn->GetActorLocation()).GetSafeNormal();
+
+	controlled_pawn->AddMovementInput(movement_direction, movement_speed*DeltaTime);
+	if ((controlled_pawn->GetActorLocation()-target_location).Size() < target_tolerance)
+	{
+		current_index++;
+	}
+}
+
 void APathfindingController::generate_path(APathfindingLevel* level, APathfindingTerrain* start, APathfindingTerrain* goal)
 {
 	std::priority_queue<std::pair<float, APathfindingTerrain*>> frontier;

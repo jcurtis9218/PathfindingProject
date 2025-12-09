@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AIController.h"
 #include "GameFramework/Actor.h"
 #include "PathfindingTerrain.generated.h"
 
@@ -28,5 +29,4 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 	int movement_cost;
-	
 };
