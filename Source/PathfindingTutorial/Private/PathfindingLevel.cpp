@@ -18,17 +18,8 @@ void APathfindingLevel::BeginPlay()
 {
 	Super::BeginPlay();
 	generate_level(level_rows, level_columns);
-	if (not pawn_class)
-	{
-		return;
-	}
-	FVector spawn_location = GetActorLocation()+FVector(0, 0, 25);
-	pawn_in_world = GetWorld()->SpawnActor<APawn>(pawn_class, spawn_location, FRotator(0, 0, 0));
-	APathfindingController* controller_in_world = Cast<APathfindingController>(pawn_in_world->GetController());
-	if (controller_in_world)
-	{
-		controller_in_world->generate_path(this, level[0][0], level[level_rows-1][level_columns-1]);
-	}
+	FTimerHandle timer_handle;
+	GetWorldTimerManager().SetTimer(timer_handle, [this]() {on_level_ready();}, 0.5f, false);
 }
 
 // Called every frame
@@ -58,18 +49,35 @@ TSubclassOf<APathfindingTerrain> APathfindingLevel::get_random_tile_type()
 	
 }
 
+FVector APathfindingLevel::get_grid_location(APathfindingTerrain* tile)
+{
+	for (int row = 0; row < level_rows; row++)
+	{
+		for (int column = 0; column < level_columns; column++)
+		{
+			if (level[row][column] == tile)
+			{
+				return FVector(row, column, 0);
+			}
+		}
+	}
+	return FVector(0, 0, 0);
+}
+
 TArray<APathfindingTerrain*> APathfindingLevel::get_neighbors(APathfindingTerrain* tile)
 {
 	TArray<APathfindingTerrain*> neighbors;
-	for (std::pair<int, int> direction : grid_directions)
+	FVector tile_location = get_grid_location(tile);
+	for (FVector direction : grid_directions)
 	{
-		if (direction.first > 0 and direction.first < level_rows)
+		FVector neighbor_location = tile_location + direction;
+		if (neighbor_location.X > 0 and neighbor_location.X < level_rows)
 		{
-			if (direction.second > 0 and direction.second < level_columns)
+			if (neighbor_location.Y > 0 and neighbor_location.Y < level_columns)
 			{
-				if (level[direction.first][direction.second]->walkable)
+				if (level[neighbor_location.X][neighbor_location.Y]->walkable)
 				{
-					neighbors.Add(level[direction.first][direction.second]);
+					neighbors.Add(level[static_cast<int>(neighbor_location.X)][static_cast<int>(neighbor_location.Y)]);
 				}
 			}
 		}
@@ -118,6 +126,25 @@ void APathfindingLevel::generate_level(int rows, int columns)
 	if (NavSys)
 	{
 		NavSys->Build();
+	}
+}
+
+void APathfindingLevel::on_level_ready()
+{
+	UE_LOG(LogTemp, Error, TEXT("Looking For Pawn"));
+	if (not pawn_class)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No Pawn Found"));
+		return;
+	}
+	FVector spawn_location = GetActorLocation()+FVector(0, 0, 25);
+	pawn_in_world = GetWorld()->SpawnActor<APawn>(pawn_class, spawn_location, FRotator(0, 0, 0));
+	APathfindingController* controller_in_world = Cast<APathfindingController>(pawn_in_world->GetController());
+	UE_LOG(LogTemp, Error, TEXT("Looking For Controller"));
+	if (controller_in_world)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Found Controller"));
+		controller_in_world->generate_path(this, level[0][0], level[level_rows-1][level_columns-1]);
 	}
 }
 
