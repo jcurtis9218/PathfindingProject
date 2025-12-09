@@ -71,13 +71,15 @@ TArray<APathfindingTerrain*> APathfindingLevel::get_neighbors(APathfindingTerrai
 	for (FVector direction : grid_directions)
 	{
 		FVector neighbor_location = tile_location + direction;
-		if (neighbor_location.X > 0 and neighbor_location.X < level_rows)
+		int x_location = floor(neighbor_location.X);
+		int y_location = floor(neighbor_location.Y);
+		if (x_location >= 0 and x_location < level_rows)
 		{
-			if (neighbor_location.Y > 0 and neighbor_location.Y < level_columns)
+			if (y_location >= 0 and y_location < level_columns)
 			{
-				if (level[neighbor_location.X][neighbor_location.Y]->walkable)
+				if (level[x_location][y_location]->walkable)
 				{
-					neighbors.Add(level[static_cast<int>(neighbor_location.X)][static_cast<int>(neighbor_location.Y)]);
+					neighbors.Add(level[x_location][y_location]);
 				}
 			}
 		}
@@ -146,5 +148,28 @@ void APathfindingLevel::on_level_ready()
 		UE_LOG(LogTemp, Error, TEXT("Found Controller"));
 		controller_in_world->generate_path(this, level[0][0], level[level_rows-1][level_columns-1]);
 	}
+}
+
+APathfindingTerrain* APathfindingLevel::get_tile_by_index(int index)
+{
+	return level[floor(index/level_rows)][floor(index%level_rows)];
+}
+
+int APathfindingLevel::get_index_from_tile(APathfindingTerrain* tile)
+{
+	int index = 0;
+	for (int row = 0; row < level_rows; row++)
+	{
+		for (int col = 0; col < level_columns; col++)
+		{
+			if (level[row][col] == tile)
+			{
+				return index;
+			}
+			index++;
+		}
+	}
+	UE_LOG(LogTemp, Error, TEXT("No Index Found for Tile %p"), tile);
+	return -1;
 }
 

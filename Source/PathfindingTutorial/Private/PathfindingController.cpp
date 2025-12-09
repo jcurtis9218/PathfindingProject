@@ -39,70 +39,56 @@ void APathfindingController::move_along_path(float DeltaTime)
 	}
 }
 
-struct FTilePriority
-{
-	float priority;
-	APathfindingTerrain* tile;
-
-	bool operator<(FTilePriority const& other) const
-	{
-		return priority < other.priority;
-	}
-	
-};
-
-
-
-uint32 APathfindingController::GetTypeHash(const ComparableTile& Thing)
-{
-	uint32 Hash = FCrc::MemCrc32(&Thing, sizeof(ComparableTile));
-	return Hash;
-}
-
 void APathfindingController::generate_path(APathfindingLevel* level, APathfindingTerrain* start, APathfindingTerrain* goal)
 {
-	ComparableTile start_tile = {start};
-	TArray<ComparableTile> found_path;
+	int start_tile_index = level->get_index_from_tile(start);
+	TArray<int> found_path;
 	UE_LOG(LogTemp, Log, TEXT("Generating Path"));
-	std::priority_queue<FTilePriority> frontier;
-	frontier.push({0.0, start});
+	std::priority_queue<std::pair<int, int>> frontier;
+	frontier.push(std::make_pair(0, start_tile_index));
 	UE_LOG(LogTemp, Error, TEXT("Added Start to Frontier"));
-	TMap<ComparableTile, ComparableTile> previous_tile;
-	TMap<ComparableTile, float> cost_of_tile;
-	UE_LOG(LogTemp, Error, TEXT("About to Set Start Cost"));
-	cost_of_tile[start_tile] = 0.0;
+	std::map<int, int> previous_tile;
+	std::map<int, float> cost_of_tile;
+	UE_LOG(LogTemp, Error, TEXT("About to Set Start (%p) Cost in %p"), &start_tile_index, &cost_of_tile);
+	cost_of_tile[start_tile_index] = 0.0;
 	UE_LOG(LogTemp, Error, TEXT("Set Start Cost to 0"));
 	UE_LOG(LogTemp, Error, TEXT("Starting Pathfinding"));
 	while (!frontier.empty())
 	{
-		APathfindingTerrain* current_tile = frontier.top().tile;
-		ComparableTile current_tile_comparable = {current_tile};
+		int current_tile_index = frontier.top().second;
+		APathfindingTerrain* current_tile = level->get_tile_by_index(current_tile_index);
 		UE_LOG(LogTemp, Error, TEXT("%f, %f"), level->get_grid_location(current_tile).X, level->get_grid_location(current_tile).Y);
 		frontier.pop();
 		if (current_tile == goal)
 		{
+			UE_LOG(LogTemp, Error, TEXT("\tGoal found"));
 			break;
 		}
-		for (APathfindingTerrain* neighbor_tile : level->get_neighbors(current_tile))
+		UE_LOG(LogTemp, Error, TEXT("\tFinding Neighbors"));
+		TArray<APathfindingTerrain*> neighbors = level->get_neighbors(current_tile);
+		UE_LOG(LogTemp, Error, TEXT("\t\tFound %d Neighbors"), neighbors.Num());
+		for (int i = 0; i < neighbors.Num(); i++)
 		{
-			float new_cost = cost_of_tile[current_tile_comparable] + neighbor_tile->movement_cost;
-			ComparableTile neighbor_comparable = {neighbor_tile};
-			if ((not cost_of_tile.Contains(neighbor_comparable)) or new_cost < (cost_of_tile[neighbor_comparable]))
+			APathfindingTerrain* neighbor_tile = neighbors[i];
+			int neighbor_tile_index = level->get_index_from_tile(neighbor_tile);
+			UE_LOG(LogTemp, Error, TEXT("\t\t\tScanning Neighbor %d of %d (Index %d)"), i, neighbors.Num(), neighbor_tile_index);
+			float new_cost = cost_of_tile[current_tile_index] + neighbor_tile->movement_cost;
+			if ((not cost_of_tile.contains(neighbor_tile_index)) or new_cost < (cost_of_tile[neighbor_tile_index]))
 			{
-				cost_of_tile[neighbor_comparable] = new_cost;
+				cost_of_tile[neighbor_tile_index] = new_cost;
 				float priority = new_cost + level->linear_distance_between(goal, neighbor_tile);
-				frontier.push({priority, neighbor_tile});
-				ComparableTile current_comparable = {current_tile};
-				previous_tile[neighbor_comparable] = current_comparable;
+				UE_LOG(LogTemp, Error, TEXT("\t\t\t\tAdding %d to Frontier"), neighbor_tile_index)
+				frontier.push(std::make_pair(-priority, neighbor_tile_index));
+				previous_tile[neighbor_tile_index] = current_tile_index;
 			}
 		}
 	}
 	APathfindingTerrain* retrace_current = goal;
 	while (not (retrace_current == start))
 	{
-		ComparableTile current_comparable = {retrace_current};
-		found_path.Add(current_comparable);
-		retrace_current = previous_tile[current_comparable].tile;
+		int current_tile_index = level->get_index_from_tile(retrace_current);
+		found_path.Add(current_tile_index);
+		retrace_current = level->get_tile_by_index(previous_tile[current_tile_index]);
 		if (retrace_current == nullptr)
 		{
 			UE_LOG(LogTemp, Error, TEXT("Empty Array"))
@@ -112,7 +98,7 @@ void APathfindingController::generate_path(APathfindingLevel* level, APathfindin
 	path = TArray<APathfindingTerrain*>();
 	for (int i = found_path.Num() - 1; i >= 0; i--)
 	{
-		path.Add(found_path[i].tile);
+		path.Add(level->get_tile_by_index(found_path[i]));
 	}
 	UE_LOG(LogTemp, Error, TEXT("Path:"));
 	for (APathfindingTerrain* tile : path)

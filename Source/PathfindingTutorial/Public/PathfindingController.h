@@ -27,23 +27,6 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 	float target_tolerance;
-
-	struct ComparableTile
-	{
-		APathfindingTerrain* tile;
-
-		bool operator<(ComparableTile const& other) const
-		{
-			return tile->GetActorLocation().Size() < other.tile->GetActorLocation().Size();
-		}
-
-		bool operator==(const ComparableTile& other) const
-		{
-			return tile == other.tile;
-		}
-	};
-	
-	uint32 GetTypeHash(const ComparableTile& Thing);
 	
 	void move_along_path(float DeltaTime);
 	void generate_path(APathfindingLevel* level, APathfindingTerrain* start, APathfindingTerrain* goal);

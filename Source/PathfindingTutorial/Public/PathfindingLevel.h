@@ -67,4 +67,7 @@ public:
 	void generate_level(int rows, int columns);
 
 	void on_level_ready();
+
+	APathfindingTerrain* get_tile_by_index(int index);
+	int get_index_from_tile(APathfindingTerrain* tile);
 };
