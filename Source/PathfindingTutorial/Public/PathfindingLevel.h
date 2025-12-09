@@ -2,18 +2,19 @@
 
 #pragma once
 
+#include "PathfindingTerrain.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "PathfindingTerrain.generated.h"
+#include "PathfindingLevel.generated.h"
 
 UCLASS()
-class PATHFINDINGTUTORIAL_API APathfindingTerrain : public AActor
+class PATHFINDINGTUTORIAL_API APathfindingLevel : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	APathfindingTerrain();
+	APathfindingLevel();
 
 protected:
 	// Called when the game starts or when spawned
@@ -23,10 +24,16 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+
 	UPROPERTY(EditAnywhere)
-	bool walkable;
-	
+	TArray<TSubclassOf<APathfindingTerrain>> possible_tiles;
+
 	UPROPERTY(EditAnywhere)
-	int movement_cost;
+	TArray<float> generation_weights;
+
+	TArray<TArray<APathfindingTerrain*>> level;
+
+	TSubclassOf<APathfindingTerrain> get_random_tile_type();
 	
+	void generate_level(int rows, int columns);
 };
