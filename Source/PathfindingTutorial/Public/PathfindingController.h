@@ -22,7 +22,7 @@ public:
 	TArray<APathfindingTerrain*> path;
 	int current_index = 0;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float movement_speed;
 	
 	UPROPERTY(EditAnywhere)
